@@ -2,35 +2,122 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Infinity Color – Reset + Sound Logic</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Infinity Color – Reset + Sound Logic</title>
+  <!-- ズームを無効化 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     :root {
-      --btn-normal:#222;
-      --btn-hover:#333;
-      --btn-disabled:#888;
+      --btn-normal: #222;
+      --btn-hover: #333;
+      --btn-disabled: #888;
     }
-    body{
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      height:100vh;margin:0;font-family:"Courier New",monospace;background:#fbfbfb;
-      position:relative;
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: "Courier New", monospace;
+      background: #fbfbfb;
+      position: relative;
     }
-    /* UI */
-    .circle{width:200px;height:200px;border-radius:50%;background:#fff;box-shadow:0 0 20px rgba(0,0,0,.3);}  
-    .number-wrapper{margin-top:16px;font-size:32px;font-weight:bold;color:#333;line-height:32px;user-select:none;width:calc(100vw - 40px);white-space:nowrap;overflow-x:hidden;mask:linear-gradient(to right,#000 75%,transparent 100%);}  
-    .ctrl-btn{margin-top:24px;width:80px;height:60px;font-size:24px;border:none;border-radius:12px;background:var(--btn-normal);color:#fff;cursor:pointer;transition:transform .1s,background .2s;}  
-    .ctrl-btn:hover{background:var(--btn-hover);}  
-    .ctrl-btn:active{transform:scale(.93);}  
-    .progress-container{margin-top:12px;width:120px;height:6px;background:#ddd;border-radius:3px;overflow:hidden;}  
-    .progress-bar{height:100%;width:0%;background:#4caf50;transition:width .2s;}  
-    .explain{margin-top:12px;font-size:14px;color:#555;text-align:center;white-space:nowrap;}  
-    /* reset arrow */
-    #reset{position:absolute;top:16px;right:16px;width:40px;height:40px;font-size:24px;background:var(--btn-normal);color:#fff;border:none;border-radius:8px;cursor:pointer;transition:transform .1s,background .2s;z-index:10;}  
-    #reset:hover{background:var(--btn-hover);}  
-    #reset:active{transform:scale(.93);}  
-    .confirm{display:none;margin-top:8px;}  
-    .confirm button{margin:0 8px;width:60px;height:40px;font-size:16px;border:none;border-radius:6px;background:var(--btn-normal);color:#fff;cursor:pointer;transition:background .2s;}  
-    .confirm button:hover{background:var(--btn-hover);}  
+    /* UI */
+    .circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 20px rgba(0, 0, 0, .3);
+    }
+    .number-wrapper {
+      margin-top: 16px;
+      font-size: 32px;
+      font-weight: bold;
+      color: #333;
+      line-height: 32px;
+      user-select: none;
+      width: calc(100vw - 40px);
+      white-space: nowrap;
+      overflow-x: hidden;
+      mask: linear-gradient(to right, #000 75%, transparent 100%);
+    }
+    .ctrl-btn {
+      margin-top: 24px;
+      width: 80px;
+      height: 60px;
+      font-size: 24px;
+      border: none;
+      border-radius: 12px;
+      background: var(--btn-normal);
+      color: #fff;
+      cursor: pointer;
+      transition: transform .1s, background .2s;
+      /* ダブルタップズームを抑制 */
+      touch-action: manipulation;
+    }
+    .ctrl-btn:hover { background: var(--btn-hover); }
+    .ctrl-btn:active { transform: scale(.93); }
+    .progress-container {
+      margin-top: 12px;
+      width: 120px;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #4caf50;
+      transition: width .2s;
+    }
+    .explain {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+      white-space: nowrap;
+    }
+    /* reset arrow */
+    #reset {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      background: var(--btn-normal);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform .1s, background .2s;
+      z-index: 10;
+      /* ダブルタップズームを抑制 */
+      touch-action: manipulation;
+    }
+    #reset:hover { background: var(--btn-hover); }
+    #reset:active { transform: scale(.93); }
+    .confirm {
+      display: none;
+      margin-top: 8px;
+    }
+    .confirm button {
+      margin: 0 8px;
+      width: 60px;
+      height: 40px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: var(--btn-normal);
+      color: #fff;
+      cursor: pointer;
+      transition: background .2s;
+      /* ダブルタップズームを抑制 */
+      touch-action: manipulation;
+    }
+    .confirm button:hover { background: var(--btn-hover); }
   </style>
 </head>
 <body>
@@ -46,91 +133,96 @@
   </div>
 
   <script>
-    /*–––– audio ––––*/
-    const Ctx = window.AudioContext||window.webkitAudioContext;
-    function beep(vol=1){
-      const ctx=new Ctx();
-      const osc=ctx.createOscillator();
-      const gain=ctx.createGain();
-      osc.type='triangle';osc.frequency.value=660;
-      osc.connect(gain);gain.connect(ctx.destination);
-      const t=ctx.currentTime;
-      gain.gain.setValueAtTime(0,t);
-      gain.gain.linearRampToValueAtTime(vol,t+0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001,t+0.3);
-      osc.start(t);osc.stop(t+0.3);
-      osc.onended=()=>ctx.close();
+    /*–––– audio ––––*/
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    function beep(vol = 1) {
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = 660;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.start(t);
+      osc.stop(t + 0.3);
+      osc.onended = () => ctx.close();
     }
 
-    /*–––– elements ––––*/
-    const numEl  = document.getElementById('number');
+    /*–––– elements ––––*/
+    const numEl = document.getElementById('number');
     const infoEl = document.getElementById('info');
     const decBtn = document.getElementById('dec');
-    const barEl  = document.getElementById('bar');
-    const reset  = document.getElementById('reset');
-    const confirm= document.getElementById('confirm');
+    const barEl = document.getElementById('bar');
+    const reset = document.getElementById('reset');
+    const confirm = document.getElementById('confirm');
     const yesBtn = document.getElementById('yes');
-    const noBtn  = document.getElementById('no');
+    const noBtn = document.getElementById('no');
 
-    /*–––– state ––––*/
-    let count=0;
-    const MAX=40;
-    const nineStr='9'.repeat(800);
-    let snapshot=null;
+    /*–––– state ––––*/
+    let count = 0;
+    const MAX = 40;
+    const nineStr = '9'.repeat(800);
+    let snapshot = null;
 
-    /*–––– helpers ––––*/
-    function setBtnDisabled(dis){
-      decBtn.style.background=dis?getComputedStyle(document.documentElement).getPropertyValue('--btn-disabled'):getComputedStyle(document.documentElement).getPropertyValue('--btn-normal');
-      decBtn.style.cursor=dis?'default':'pointer';
+    /*–––– helper ––––*/
+    function setBtnDisabled(dis) {
+      decBtn.style.background = dis ? getComputedStyle(document.documentElement).getPropertyValue('--btn-disabled') : getComputedStyle(document.documentElement).getPropertyValue('--btn-normal');
+      decBtn.style.cursor = dis ? 'default' : 'pointer';
     }
 
-    /*–––– main click ––––*/
-    decBtn.addEventListener('click',()=>{
-      // sound first (volume halves after 40)
-      beep(count>=MAX?0.5:1);
-      // ui only until 40
-      if(count>=MAX) return;
-      if(++count===1){
-        numEl.textContent='0.'+nineStr+'…';
-        infoEl.textContent='マイナスを押すと数字が 0 に近づき、0 は黒です。';
+    /*–––– main click ––––*/
+    decBtn.addEventListener('click', () => {
+      // sound first
+      beep(count >= MAX ? 0.5 : 1);
+      if (count >= MAX) return;
+      if (++count === 1) {
+        numEl.textContent = '0.' + nineStr + '…';
+        infoEl.textContent = 'マイナスを押すと数字が 0 に近づき、0 は黒です。';
       }
-      barEl.style.width=(count/MAX*100)+'%';
-      if(count===MAX){
-        infoEl.textContent='色はスペクトラムです。';
+      barEl.style.width = (count / MAX * 100) + '%';
+      if (count === MAX) {
+        infoEl.textContent = '色はスペクトラムです。';
         setBtnDisabled(true);
       }
     });
 
-    /*–––– reset workflow ––––*/
-    reset.addEventListener('click',()=>{
-      snapshot={count:count,num:numEl.textContent,info:infoEl.textContent,bar:barEl.style.width,disabled:count>=MAX};
-      infoEl.textContent='本当にリセットしますか？あなたの今までの時間が無駄になりますよ？';
-      confirm.style.display='block';
-      reset.disabled=true;
+    /*–––– reset workflow ––––*/
+    reset.addEventListener('click', () => {
+      snapshot = { count: count, num: numEl.textContent, info: infoEl.textContent, bar: barEl.style.width, disabled: count >= MAX };
+      infoEl.textContent = '本当にリセットしますか？あなたの今までの時間が無駄になりますよ？';
+      confirm.style.display = 'block';
+      reset.disabled = true;
     });
 
-    yesBtn.onclick=()=>{
-      count=0;
-      numEl.textContent='1';
-      infoEl.textContent='⚪︎の色を変えよう！';
-      barEl.style.width='0%';
+    yesBtn.onclick = () => {
+      count = 0;
+      numEl.textContent = '1';
+      infoEl.textContent = '⚪︎の色を変えよう！';
+      barEl.style.width = '0%';
       setBtnDisabled(false);
       closeConfirm();
     };
-    noBtn.onclick=()=>{
-      if(snapshot){
-        ({count}=snapshot);
-        numEl.textContent=snapshot.num;
-        infoEl.textContent=snapshot.info;
-        barEl.style.width=snapshot.bar;
+    noBtn.onclick = () => {
+      if (snapshot) {
+        ({ count } = snapshot);
+        numEl.textContent = snapshot.num;
+        infoEl.textContent = snapshot.info;
+        barEl.style.width = snapshot.bar;
         setBtnDisabled(snapshot.disabled);
       }
       closeConfirm();
     };
 
-    function closeConfirm(){confirm.style.display='none';reset.disabled=false;snapshot=null;}
+    function closeConfirm() {
+      confirm.style.display = 'none';
+      reset.disabled = false;
+      snapshot = null;
+    }
   </script>
 </body>
 </html>
-
 
