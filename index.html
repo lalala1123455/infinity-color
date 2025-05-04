@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Infinity Color – 0.999… with Fun Sound</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;background:#fbfbfb;font-family:'Courier New',monospace;}
+    .circle{width:200px;height:200px;border-radius:50%;background:#fff;box-shadow:0 0 20px rgba(0,0,0,0.3);}
+    .number-wrapper{overflow-x:hidden;white-space:nowrap;margin-top:16px;font-size:32px;font-weight:bold;color:#333;line-height:32px;user-select:none;width:calc(100vw - 40px);-webkit-mask-image:linear-gradient(to right,#000 75%,transparent 100%);mask-image:linear-gradient(to right,#000 75%,transparent 100%);} 
+    button{margin-top:24px;width:80px;height:60px;font-size:24px;border:none;border-radius:12px;background:#222;color:#fff;cursor:pointer;transition:transform .1s,background .2s;}button:hover{background:#333;}button:active{transform:scale(.93);}button[disabled]{background:#888;cursor:default;}  
+    .progress-container{margin-top:12px;width:120px;height:6px;background:#ddd;border-radius:3px;overflow:hidden;}
+    .progress-bar{height:100%;width:0%;background:#4caf50;transition:width .2s;}
+    .explain{margin-top:12px;font-size:14px;color:#555;text-align:center;white-space:nowrap;}
+  </style>
+</head>
+<body>
+  <div class="circle"></div>
+  <div class="number-wrapper"><span id="number">1</span></div>
+  <button id="dec">-</button>
+  <div class="progress-container"><div class="progress-bar" id="bar"></div></div>
+  <p class="explain" id="info">⚪︎の色を変えよう！</p>
+
+  <script>
+    function playSound() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = 660;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+      osc.onended = () => ctx.close();
+    }
+
+    const numEl  = document.getElementById('number');
+    const infoEl = document.getElementById('info');
+    const btn    = document.getElementById('dec');
+    const bar    = document.getElementById('bar');
+
+    let pressCount = 0;
+    const maxPress = 40;
+    const nineString = '9'.repeat(800);
+
+    btn.addEventListener('click', () => {
+      if (pressCount >= maxPress) return;
+      pressCount++;
+      playSound();
+
+      if (pressCount === 1) {
+        numEl.textContent = '0.' + nineString + '…';
+        infoEl.textContent = 'マイナスを押すと数字が 0 に近づき、0 は黒です。';
+      }
+
+      const percent = (pressCount / maxPress) * 100;
+      bar.style.width = percent + '%';
+
+      if (pressCount === maxPress) {
+        infoEl.textContent = '色はスペクトラムです。';
+        btn.disabled = true;
+      }
+    });
+  </script>
+</body>
+</html>
