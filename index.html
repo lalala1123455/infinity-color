@@ -11,7 +11,7 @@
     .circle{width:200px;height:200px;border-radius:50%;background:#fff;box-shadow:0 0 20px rgba(0,0,0,0.3);}
     .number-wrapper{overflow-x:hidden;white-space:nowrap;margin-top:16px;font-size:32px;font-weight:bold;color:#333;line-height:32px;user-select:none;width:calc(100vw - 40px);-webkit-mask-image:linear-gradient(to right,#000 75%,transparent 100%);mask-image:linear-gradient(to right,#000 75%,transparent 100%);}  
     button{margin-top:24px;width:80px;height:60px;font-size:24px;border:none;border-radius:12px;background:#222;color:#fff;cursor:pointer;transition:transform .1s,background .2s;}
-    button:hover{background:#333;} button:active{transform:scale(.93);} button[disabled]{background:#888;cursor:default;}  
+    button:hover{background:#333;} button:active{transform:scale(.93);}  
     .progress-container{margin-top:12px;width:120px;height:6px;background:#ddd;border-radius:3px;overflow:hidden;}  
     .progress-bar{height:100%;width:0%;background:#4caf50;transition:width .2s;}  
     .explain{margin-top:12px;font-size:14px;color:#555;text-align:center;white-space:nowrap;}
@@ -60,9 +60,14 @@
     let savedState = null;
 
     btn.addEventListener('click',()=>{
+      // サウンドは常に鳴らす
+      playSound();
+
+      // 40回を超えても数は増やさずUIは固定
       if(pressCount>=maxPress) return;
-      pressCount++; playSound();
-      if(pressCount===1) {
+
+      pressCount++;
+      if(pressCount===1){
         numEl.textContent='0.'+nineString+'…';
         infoEl.textContent='マイナスを押すと数字が 0 に近づき、0 は黒です。';
       }
@@ -70,37 +75,30 @@
       bar.style.width=percent+'%';
       if(pressCount===maxPress){
         infoEl.textContent='色はスペクトラムです。';
-        btn.disabled=true;
       }
     });
 
     resetBtn.addEventListener('click',()=>{
-      // Snapshot state
-      savedState={ pressCount, num:numEl.textContent, info:infoEl.textContent, barWidth:bar.style.width, decDisabled:btn.disabled };
-      // Update prompt and show buttons
+      savedState={ pressCount, num:numEl.textContent, info:infoEl.textContent, barWidth:bar.style.width };
       infoEl.textContent='本当にリセットしますか？あなたの今までの時間が無駄になりますよ？';
       confirm.style.display='block';
       resetBtn.disabled=true;
     });
 
     yesBtn.addEventListener('click',()=>{
-      // Confirm reset
       pressCount=0;
       numEl.textContent='1';
       infoEl.textContent='⚪︎の色を変えよう！';
       bar.style.width='0%';
-      btn.disabled=false;
       cleanup();
     });
 
     noBtn.addEventListener('click',()=>{
-      // Cancel reset
       if(savedState){
         pressCount=savedState.pressCount;
         numEl.textContent=savedState.num;
         infoEl.textContent=savedState.info;
         bar.style.width=savedState.barWidth;
-        btn.disabled=savedState.decDisabled;
       }
       cleanup();
     });
@@ -109,3 +107,4 @@
   </script>
 </body>
 </html>
+
